@@ -227,7 +227,6 @@
 			Quiet			= "-quiet",
 --			Release			= "-release",
 			RetainPaths		= "-op",
-			Symbols			= "-g",
 			SymbolsLikeC	= "-gc",
 			UnitTest		= "-unittest",
 			Verbose			= "-v",
@@ -247,6 +246,9 @@
 		warnings = {
 			Default = "-wi",
 			Extra = "-wi",
+		},
+		symbols = {
+			On = "-g",
 		}
 	}
 
