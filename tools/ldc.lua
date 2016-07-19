@@ -43,7 +43,6 @@
 			NoBoundsCheck	= "-disable-boundscheck",
 --			Release			= "-release",
 			RetainPaths		= "-op",
-			Symbols			= "-g",
 			SymbolsLikeC	= "-gc",
 			UnitTest		= "-unittest",
 			Verbose			= "-v",
@@ -71,6 +70,9 @@
 		warnings = {
 			Default = "-wi",
 			Extra = "-wi",	-- TODO: is there a way to get extra warnings?
+		},
+		symbols = {
+			On = "-g",
 		}
 	}
 

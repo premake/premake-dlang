@@ -36,7 +36,6 @@
 			NoBoundsCheck	= "-fno-bounds-check",
 --			Release			= "-frelease",
 			RetainPaths		= "-op",
-			Symbols			= "-g",
 			SymbolsLikeC	= "-fdebug-c",
 			UnitTest		= "-funittest",
 			Verbose			= "-fd-verbose",
@@ -65,6 +64,9 @@
 --			Off = "-w",
 --			Default = "-w",	-- TODO: check this...
 			Extra = "-Wall -Wextra",
+		},
+		symbols = {
+			On = "-g",
 		}
 	}
 

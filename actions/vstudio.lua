@@ -137,7 +137,7 @@
 			_p(2,'<quiet>%s</quiet>', iif(cfg.flags.Quiet, '1', '0'))
 			_p(2,'<verbose>%s</verbose>', iif(cfg.flags.Verbose, '1', '0'))
 			_p(2,'<vtls>0</vtls>')
-			_p(2,'<symdebug>%s</symdebug>', iif(cfg.flags.Symbols or cfg.flags.SymbolsLikeC, iif(cfg.flags.SymbolsLikeC, '2', '1'), '0'))
+			_p(2,'<symdebug>%s</symdebug>', iif(cfg.symbols == p.ON or cfg.flags.SymbolsLikeC, iif(cfg.flags.SymbolsLikeC, '2', '1'), '0'))
 			_p(2,'<optimize>%s</optimize>', iif(isOptimised, '1', '0'))
 			_p(2,'<cpu>0</cpu>')
 			_p(2,'<isX86_64>%s</isX86_64>', iif(is64bit, '1', '0'))
@@ -214,7 +214,7 @@
 			_p(2,'<run>0</run>')
 			_p(2,'<runargs />')
 
---			_p(2,'<runCv2pdb>%s</runCv2pdb>', iif(cfg.flags.Symbols, '1', '0'))
+--			_p(2,'<runCv2pdb>%s</runCv2pdb>', iif(cfg.symbols == p.ON, '1', '0'))
 			_p(2,'<runCv2pdb>1</runCv2pdb>') -- we will just leave this always enabled, since it's ignored if no debuginfo is written
 			_p(2,'<pathCv2pdb>$(VisualDInstallDir)cv2pdb\\cv2pdb.exe</pathCv2pdb>')
 			_p(2,'<cv2pdbPre2043>0</cv2pdbPre2043>')
