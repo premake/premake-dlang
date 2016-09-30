@@ -28,15 +28,12 @@
 			x86_64 = "-m64",
 		},
 		flags = {
-			Deprecated		= "-fdeprecated",
 			Documentation	= "-fdoc",
 			FatalWarnings	= "-Werror",
 			GenerateHeader	= "-fintfc",
 			GenerateJSON	= "-fX",
-			NoBoundsCheck	= "-fno-bounds-check",
 --			Release			= "-frelease",
 			RetainPaths		= "-op",
-			SymbolsLikeC	= "-fdebug-c",
 			UnitTest		= "-funittest",
 			Verbose			= "-fd-verbose",
 		},
@@ -56,9 +53,10 @@
 			On = "-fPIC",
 		},
 		vectorextensions = {
-			AVX = "-mavx",
 			SSE = "-msse",
 			SSE2 = "-msse2",
+			AVX = "-mavx",
+			AVX2 = "-mavx2",
 		},
 		warnings = {
 --			Off = "-w",
@@ -67,6 +65,18 @@
 		},
 		symbols = {
 			On = "-g",
+			FastLink = "-g",
+			LikeC = "-g -fdebug-c",
+		},
+		boundschecking = {
+--			On = "-boundscheck=on",
+			Off = "-fno-bounds-check",
+--			SafeOnly = "-boundscheck=safeonly",
+		},
+		deprecations = {
+			On = "-Wdeprecated",
+--			Off = "-de",
+--			Warn = "-dw"
 		}
 	}
 
@@ -279,14 +289,14 @@
 --
 
 	gdc.tools = {
-		ps3 = {
-			dc = "ppu-lv2-gdc",
-			ar = "ppu-lv2-ar",
-		},
+		dc = "gdc",
+		ar = "ar",
+		rc = "windres"
 	}
 
 	function gdc.gettoolname(cfg, tool)
-		local names = gdc.tools[cfg.architecture] or gdc.tools[cfg.system] or {}
-		local name = names[tool]
-		return name or gdc[tool]
+		if (cfg.gccprefix and gdc.tools[tool]) or tool == "rc" then
+			return (cfg.gccprefix or "") .. gdc.tools[tool]
+		end
+		return nil
 	end

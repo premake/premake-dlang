@@ -14,6 +14,7 @@
 	local p = premake
 	local api = p.api
 
+
 --
 -- Register the D extension
 --
@@ -21,30 +22,63 @@
 	p.D = "D"
 
 	api.addAllowed("language", p.D)
+	api.addAllowed("debugger", "Mago")
 	api.addAllowed("floatingpoint", "None")
+	api.addAllowed("symbols", "LikeC")
 	api.addAllowed("flags", {
 		"CodeCoverage",
-		"Deprecated",
 		"Documentation",
 		"GenerateHeader",
+		"GenerateDeps",
 		"GenerateJSON",
 		"GenerateMap",
-		"NoBoundsCheck",
---		"PIC",		// Note: this should be supported elsewhere...
 		"Profile",
+		"ProfileGC",
 		"Quiet",
 --		"Release",	// Note: We infer this flag from config.isDebugBuild()
 		"RetainPaths",
-		"SeparateCompilation",
-		"SymbolsLikeC",
 		"UnitTest",
 		"Verbose",
+		"BetterC",
+		"AddMainFunction",
+
+		-- Deprecated
+		"Deprecated", -- DEPRECATED
+		"NoBoundsCheck", -- DEPRECATED
+		"SeparateCompilation", -- DEPRECATED
+		"SymbolsLikeC", -- DEPRECATED
 	})
 
 
 --
 -- Register some D specific properties
 --
+
+	api.register {
+		name = "compilationmodel",
+		scope = "config",
+		kind = "string",
+		allowed = {
+			"Default",
+			"Package",
+			"Project",
+			"File"
+		}
+	}
+
+	api.register {
+		name = "importdirs",
+		scope = "config",
+		kind = "list:directory",
+		tokens = true,
+	}
+
+	api.register {
+		name = "stringimportdirs",
+		scope = "config",
+		kind = "list:directory",
+		tokens = true,
+	}
 
 	api.register {
 		name = "versionconstants",
@@ -82,7 +116,7 @@
 	api.register {
 		name = "docname",
 		scope = "config",
-		kind = "string",
+		kind = "file",
 		tokens = true,
 	}
 
@@ -96,9 +130,74 @@
 	api.register {
 		name = "headername",
 		scope = "config",
-		kind = "string",
+		kind = "file",
 		tokens = true,
 	}
+
+	api.register {
+		name = "depsfile",
+		scope = "config",
+		kind = "file",
+		tokens = true,
+	}
+
+	api.register {
+		name = "jsonfile",
+		scope = "config",
+		kind = "file",
+		tokens = true,
+	}
+
+	api.register {
+		name = "mincoverage",
+		scope = "config",
+		kind = "integer",
+	}
+
+	api.register {
+		name = "boundschecking",
+		scope = "config",
+		kind = "string",
+		allowed = {
+			"Default",
+			"On",
+			"Off",
+			"SafeOnly"
+		}
+	}
+
+	api.register {
+		name = "deprecations",
+		scope = "config",
+		kind = "string",
+		allowed = {
+			"Default",
+			"On",
+			"Off",
+			"Warn",
+		}
+	}
+
+
+--
+-- Deprecate some stuff
+--
+	api.deprecateValue("flags", "SymbolsLikeC", 'Use `symbols "LikeC"` instead',
+	function(value)
+		symbols "LikeC"
+	end)
+	api.deprecateValue("flags", "Deprecated", 'Use `deprecations "On"` instead',
+	function(value)
+		deprecations "On"
+	end)
+	api.deprecateValue("flags", "NoBoundsCheck", 'Use `boundschecking "Off"` instead',
+	function(value)
+		boundschecking "Off"
+	end)
+	api.deprecateValue("flags", "SeparateCompilation", 'Use `compilationmodel "File"` instead',
+	function(value)
+		compilationmodel "File"
+	end)
 
 
 --
@@ -118,9 +217,44 @@
 
 
 --
+-- Patch the project table to provide knowledge of D projects
+--
+	function p.project.isd(prj)
+		return prj.language == p.D
+	end
+
+
+--
+-- Patch the path table to provide knowledge of D file extenstions
+--
+	function path.isdfile(fname)
+		return path.hasextension(fname, { ".d" })
+	end
+
+	function path.isdincludefile(fname)
+		return path.hasextension(fname, { ".di" })
+	end
+
+
+--
 -- Decide when to load the full module
 --
 
 	return function (cfg)
-		return (cfg.language == p.D)
+		local prj = cfg.project
+		if p.project.iscpp(prj) then
+			if cfg.project.hasdfiles == nil then
+				cfg.project.hasdfiles = false
+				-- scan for D files
+				local tr = p.project.getsourcetree(prj)
+				p.tree.traverse(tr, {
+					onleaf = function(node)
+						if not prj.hasdfiles then
+							prj.hasdfiles = path.isdfile(node.name)
+						end
+					end
+				})
+			end
+		end
+		return (cfg.language == p.D or cfg.project.hasdfiles)
 	end

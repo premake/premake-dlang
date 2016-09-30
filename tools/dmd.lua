@@ -216,20 +216,20 @@
 		},
 		flags = {
 			CodeCoverage	= "-cov",
-			Deprecated		= "-d",
 			Documentation	= "-D",
 			FatalWarnings	= "-w",
 			GenerateHeader	= "-H",
 			GenerateJSON	= "-X",
 			GenerateMap		= "-map",
-			NoBoundsCheck	= "-noboundscheck",
 			Profile			= "-profile",
+			ProfileGC		= "-profile=gc",
 			Quiet			= "-quiet",
 --			Release			= "-release",
 			RetainPaths		= "-op",
-			SymbolsLikeC	= "-gc",
 			UnitTest		= "-unittest",
 			Verbose			= "-v",
+			BetterC			= "-betterC",
+			AddMainFunction	= "-main",
 		},
 		floatingpoint = {
 			None = "-nofloat",
@@ -249,6 +249,18 @@
 		},
 		symbols = {
 			On = "-g",
+			FastLink = "-g",
+			LikeC = "-gc",
+		},
+		boundschecking = {
+			On = "-boundscheck=on",
+			Off = "-boundscheck=off",
+			SafeOnly = "-boundscheck=safeonly",
+		},
+		deprecations = {
+			On = "-d",
+			Off = "-de",
+			Warn = "-dw"
 		}
 	}
 

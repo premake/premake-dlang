@@ -10,10 +10,342 @@
 	m.visuald = {}
 
 	local vstudio = p.vstudio
+	local vc2010 = vstudio.vc2010
 	local workspace = p.workspace
 	local project = p.project
 	local config = p.config
 	local tree = p.tree
+
+	m.element = vc2010.element
+
+
+---- C/C++ projects ----
+
+	function m.dcompiler(cfg)
+		if cfg.project.hasdfiles then
+			m.element("DCompiler", nil, "DMD") -- TODO: support "LDC", "None"
+		end
+	end
+
+	p.override(vc2010.elements, "configurationProperties", function(oldfn, cfg)
+		local todo = oldfn(cfg)
+		table.insert(todo, m.dcompiler)
+		return todo
+	end)
+
+	function m.importPaths(cfg)
+		if #cfg.importdirs > 0 then
+			local dirs = vstudio.path(cfg, cfg.importdirs)
+			if #dirs > 0 then
+				m.element("ImportPaths", nil, "%s;%%(ImportPaths)", table.concat(dirs, ";"))
+			end
+		end
+	end
+
+	function m.stringImportPaths(cfg)
+		if #cfg.stringimportdirs > 0 then
+			local dirs = vstudio.path(cfg, cfg.stringimportdirs)
+			if #dirs > 0 then
+				m.element("StringImportPaths", nil, "%s;%%(StringImportPaths)", table.concat(dirs, ";"))
+			end
+		end
+	end
+
+	function m.versionIdentifiers(cfg)
+		local ident = iif(cfg.versionlevel, { cfg.versionlevel }, {})
+		ident = table.join(ident, cfg.versionconstants)
+		if #ident > 0 then
+			ident = table.concat(ident, ";")
+			ident = p.esc(ident) .. ";%%(VersionIdentifiers)"
+			m.element('VersionIdentifiers', nil, ident)
+		end
+	end
+
+	function m.debugIdentifiers(cfg)
+		local ident = iif(cfg.debuglevel, { cfg.debuglevel }, {})
+		ident = table.join(ident, cfg.debugconstants)
+		if #ident > 0 then
+			ident = table.concat(ident, ";")
+			ident = p.esc(ident) .. ";%%(DebugIdentifiers)"
+			m.element('DebugIdentifiers', nil, ident)
+		end
+	end
+
+	function m.compilationModel(cfg)
+		if cfg.compilationmodel and cfg.compilationmodel ~= "Default" then
+			m.element("CompilationModel", nil, cfg.compilationmodel)
+		end
+	end
+
+	function m.profile(cfg)
+		if cfg.flags.Profile then
+			m.element("Profile", nil, "true")
+		end
+	end
+
+	function m.profileGc(cfg)
+		if cfg.flags.ProfileGC then
+			m.element("ProfileGC", nil, "true")
+		end
+	end
+
+	function m.coverage(cfg)
+		if cfg.flags.CodeCoverage then
+			m.element("Coverage", nil, "true")
+		end
+	end
+
+	function m.minCoverage(cfg)
+		if cfg.mincoverage then
+			m.element("MinCoverage", nil, cfg.mincoverage)
+		end
+	end
+
+	function m.unittest(cfg)
+		if cfg.flags.UnitTest then
+			m.element("Unittest", nil, "true")
+		end
+	end
+
+	function m.optimization(cfg)
+		if cfg.optimize == p.OFF then
+			m.element("Optimizer", nil, "false")
+			m.element("Inliner", nil, "false")
+			m.element("StackFrame", nil, "true")
+			m.element("StackStomp", nil, "true")
+		elseif cfg.optimize == "Debug" then
+			m.element("Optimizer", nil, "false")
+			m.element("Inliner", nil, "true")
+			m.element("StackFrame", nil, "true")
+			m.element("StackStomp", nil, "true")
+		elseif cfg.optimize == p.ON or cfg.optimize == "Full" or cfg.optimize == "Speed" or cfg.optimize == "Size" then
+			m.element("Optimizer", nil, "true")
+			m.element("Inliner", nil, "true")
+			m.element("StackFrame", nil, "false")
+			m.element("StackStomp", nil, "false")
+		end
+	end
+
+	function m.betterC(cfg)
+		if cfg.flags.BetterC then
+			m.element("BetterC", nil, "true")
+		end
+	end
+
+	function m.betterc(cfg)
+		if cfg.flags.BetterC then
+			m.element("BetterC", nil, "true")
+		end
+	end
+
+	function m.addMain(cfg)
+		if cfg.flags.AddMainFunction then
+			m.element("Main", nil, "true")
+		end
+	end
+
+	function m.debugCode(cfg)
+		-- TODO: there should be something user-configurable driving this option
+
+		-- <DebugCode>Default</DebugCode>  asserts, invariants, contraints
+		-- <DebugCode>Release</DebugCode>  none (-release)
+		-- <DebugCode>Debug</DebugCode>    debug statements, asserts, invariants, contraints (-debug)
+		if config.isDebugBuild(cfg) then
+			m.element("DebugCode", nil, "Debug")
+		else
+			m.element("DebugCode", nil, "Release")
+		end
+	end
+
+	function m.debugInformationFormat(cfg)
+		if cfg.symbols == p.ON or cfg.symbols == "FastLink" then
+			m.element("DebugInfo", nil, "Mago")
+		elseif cfg.symbols == "LikeC" then
+			m.element("DebugInfo", nil, "VS")
+		elseif cfg.symbols == p.OFF then
+			m.element("DebugInfo", nil, "None")
+		end
+	end
+
+	function m.boundsChecking(cfg)
+		if cfg.boundschecking and cfg.boundschecking ~= "Default" then
+			m.element("BoundsCheck", nil, cfg.boundschecking)
+		end
+	end
+
+	function m.warnings(cfg)
+		if cfg.warnings == p.OFF then
+			m.element("Warnings", nil, "None")
+		elseif cfg.warnings and cfg.warnings ~= "Default" then
+			if cfg.flags.FatalCompileWarnings then
+				m.element("Warnings", nil, "Error")
+			else
+				m.element("Warnings", nil, "Info")
+			end
+		end
+	end
+
+	function m.deprecations(cfg)
+		if cfg.deprecations == "On" then
+			m.element("Deprecations", nil, "Allow")
+		elseif cfg.deprecations == "Off" then
+			m.element("Deprecations", nil, "Error")
+		elseif cfg.deprecations == "Warn" then
+			m.element("Deprecations", nil, "Info")
+		end
+	end
+
+	function m.verbose(cfg)
+		if cfg.flags.Verbose then
+			m.element("Verbose", nil, "true")
+		end
+	end
+
+	function m.docDir(cfg)
+		if cfg.docdir then
+			m.element("DocDir", nil, cfg.docdir)
+		end
+	end
+
+	function m.docFile(cfg)
+		if cfg.docname then
+			m.element("DocFile", nil, cfg.docname)
+		end
+	end
+
+	function m.depsFile(cfg)
+		if cfg.depsfile then
+			m.element("DepFile", nil, cfg.depsfile)
+		end
+	end
+
+	function m.headerDir(cfg)
+		if cfg.headerdir then
+			m.element("HeaderDir", nil, cfg.headerdir)
+		end
+	end
+
+	function m.headerFile(cfg)
+		if cfg.headername then
+			m.element("HeaderFile", nil, cfg.headername)
+		end
+	end
+
+	function m.jsonFile(cfg)
+		if cfg.jsonfile then
+			m.element("JSONFile", nil, cfg.jsonfile)
+		end
+	end
+
+	m.elements.dCompile = function(cfg)
+		return {
+			m.importPaths,
+			m.stringImportPaths,
+			m.versionIdentifiers,
+			m.debugIdentifiers,
+			m.compilationModel,
+			m.profile,
+			m.profileGc,
+			m.coverage,
+			m.unittest,
+			m.optimization,
+			-- <AllInst>true</AllInst> -- emit all template instantiations
+			m.betterC,
+			m.addMain,
+			m.debugCode,
+			m.debugInformationFormat,
+			m.boundsChecking,
+			-- <PerformSyntaxCheckOnly>true</PerformSyntaxCheckOnly> -- syntax checking only
+			m.warnings,
+			m.deprecations,
+			-- <ShowCommandLine>true</ShowCommandLine> emit command line while compiling
+			m.verbose,
+			-- <ShowTLS>true</ShowTLS>
+			-- <ShowGC>true</ShowGC>
+			-- <IgnorePragma>true</IgnorePragma>
+			-- <ShowDependencies>true</ShowDependencies>
+			m.docDir,
+			m.docFile,
+			m.depsFile,
+			m.headerDir,
+			m.headerFile,
+			m.jsonFile,
+		}
+	end
+
+	function m.dCompile(cfg)
+		p.push('<DCompile>')
+		p.callArray(m.elements.dCompile, cfg)
+		p.pop('</DCompile>')
+	end
+
+	p.override(vc2010.elements, "itemDefinitionGroup", function(oldfn, cfg)
+		local todo = oldfn(cfg)
+		table.insertafter(todo, vc2010.clCompile, m.dCompile)
+		return todo
+	end)
+
+
+---
+-- DInclude group
+---
+	vc2010.categories.DInclude = {
+		name       = "DInclude",
+		extensions = { ".di" },
+		priority   = 1,
+
+		emitFiles = function(prj, group)
+			vc2010.emitFiles(prj, group, "DInclude", {vc2010.generatedFile})
+		end,
+
+		emitFilter = function(prj, group)
+			vc2010.filterGroup(prj, group, "DInclude")
+		end
+	}
+
+
+---
+-- DCompile group
+---
+	vc2010.categories.DCompile = {
+		name       = "DCompile",
+		extensions = { ".d" },
+		priority   = 2,
+
+		emitFiles = function(prj, group)
+			local fileCfgFunc = function(fcfg, condition)
+				if fcfg then
+					return {
+						vc2010.excludedFromBuild,
+						-- TODO: D per-file options
+--						m.objectFileName,
+--						m.clCompilePreprocessorDefinitions,
+--						m.clCompileUndefinePreprocessorDefinitions,
+--						m.optimization,
+--						m.forceIncludes,
+--						m.precompiledHeader,
+--						m.enableEnhancedInstructionSet,
+--						m.additionalCompileOptions,
+--						m.disableSpecificWarnings,
+--						m.treatSpecificWarningsAsErrors
+					}
+				else
+					return {
+						vc2010.excludedFromBuild
+					}
+				end
+			end
+
+			vc2010.emitFiles(prj, group, "DCompile", {vc2010.generatedFile}, fileCfgFunc)
+		end,
+
+		emitFilter = function(prj, group)
+			vc2010.filterGroup(prj, group, "DCompile")
+		end
+	}
+
+
+---- VisualD projects ----
 
 --
 -- Patch the vstudio actions with D support...
@@ -137,7 +469,7 @@
 			_p(2,'<quiet>%s</quiet>', iif(cfg.flags.Quiet, '1', '0'))
 			_p(2,'<verbose>%s</verbose>', iif(cfg.flags.Verbose, '1', '0'))
 			_p(2,'<vtls>0</vtls>')
-			_p(2,'<symdebug>%s</symdebug>', iif(cfg.symbols == p.ON or cfg.flags.SymbolsLikeC, iif(cfg.flags.SymbolsLikeC, '2', '1'), '0'))
+			_p(2,'<symdebug>%s</symdebug>', iif(cfg.symbols ~= p.OFF, iif(cfg.symbols == "LikeC", '2', '1'), '0'))
 			_p(2,'<optimize>%s</optimize>', iif(isOptimised, '1', '0'))
 			_p(2,'<cpu>0</cpu>')
 			_p(2,'<isX86_64>%s</isX86_64>', iif(is64bit, '1', '0'))
@@ -147,14 +479,14 @@
 			_p(2,'<isFreeBSD>0</isFreeBSD>')
 			_p(2,'<isSolaris>0</isSolaris>')
 			_p(2,'<scheduler>0</scheduler>')
-			_p(2,'<useDeprecated>%s</useDeprecated>', iif(cfg.flags.Deprecated, '1', '0'))
-			_p(2,'<errDeprecated>0</errDeprecated>')
+			_p(2,'<useDeprecated>%s</useDeprecated>', iif(cfg.deprecations == p.ON, '1', '0'))
+			_p(2,'<errDeprecated>%s</errDeprecated>', iif(cfg.deprecations == p.Off, '1', '0'))
 			_p(2,'<useAssert>0</useAssert>')
 			_p(2,'<useInvariants>0</useInvariants>')
 			_p(2,'<useIn>0</useIn>')
 			_p(2,'<useOut>0</useOut>')
 			_p(2,'<useArrayBounds>0</useArrayBounds>')
-			_p(2,'<noboundscheck>%s</noboundscheck>', iif(cfg.flags.NoBoundsCheck, '1', '0'))
+			_p(2,'<noboundscheck>%s</noboundscheck>', iif(cfg.boundschecking == p.OFF, '1', '0'))
 			_p(2,'<useSwitchError>0</useSwitchError>')
 			_p(2,'<useUnitTests>%s</useUnitTests>', iif(cfg.flags.UnitTest, '1', '0'))
 			_p(2,'<useInline>%s</useInline>', iif(cfg.flags.Inline or isOptimised, '1', '0'))
@@ -162,11 +494,11 @@
 			_p(2,'<preservePaths>0</preservePaths>')
 
 			_p(2,'<warnings>%s</warnings>', iif(cfg.flags.FatalCompileWarnings, '1', '0'))
-			_p(2,'<infowarnings>%s</infowarnings>', iif(cfg.warnings and cfg.warnings ~= "Off", '1', '0'))
+			_p(2,'<infowarnings>%s</infowarnings>', iif(cfg.warnings and cfg.warnings ~= p.OFF, '1', '0'))
 
 			_p(2,'<checkProperty>0</checkProperty>')
 			_p(2,'<genStackFrame>0</genStackFrame>')
-			_p(2,'<pic>%s</pic>', iif(cfg.pic == "On", '1', '0'))
+			_p(2,'<pic>%s</pic>', iif(cfg.pic == p.ON, '1', '0'))
 			_p(2,'<cov>%s</cov>', iif(cfg.flags.CodeCoverage, '1', '0'))
 			_p(2,'<nofloat>%s</nofloat>', iif(cfg.floatingpoint and cfg.floatingpoint == "None", '1', '0'))
 			_p(2,'<Dversion>2</Dversion>')

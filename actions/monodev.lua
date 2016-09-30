@@ -75,7 +75,7 @@
 				return groups.CustomBuild
 			elseif path.isdfile(node.name) then
 				return groups.Compile
---			elseif path.isdheader(node.name) then -- TODO: do .di files belong in here?
+--			elseif path.isdincludefile(node.name) then -- TODO: do .di files belong in here?
 --				return groups.Include
 			elseif path.isresourcefile(node.name) then
 				return groups.ResourceCompile

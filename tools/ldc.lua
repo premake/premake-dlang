@@ -35,17 +35,16 @@
 --			mips = "-march=mips",	-- -march=mipsel?
 		},
 		flags = {
-			Deprecated		= "-d",
+			CodeCoverage	= "-cov",
 			Documentation	= "-D",
 			FatalWarnings	= "-w", -- Use LLVM flag? : "-fatal-assembler-warnings",
 			GenerateHeader	= "-H",
 			GenerateJSON	= "-X",
-			NoBoundsCheck	= "-disable-boundscheck",
 --			Release			= "-release",
 			RetainPaths		= "-op",
-			SymbolsLikeC	= "-gc",
 			UnitTest		= "-unittest",
 			Verbose			= "-v",
+			AddMainFunction	= "-main",
 		},
 		floatingpoint = {
 			Fast = "-fp-contract=fast -enable-unsafe-fp-math",
@@ -63,9 +62,10 @@
 			On = "-relocation-model=pic",
 		},
 		vectorextensions = {
-			AVX = "-mattr=+avx",
 			SSE = "-mattr=+sse",
 			SSE2 = "-mattr=+sse2",
+			AVX = "-mattr=+avx",
+			AVX2 = "-mattr=+avx2",
 		},
 		warnings = {
 			Default = "-wi",
@@ -73,6 +73,18 @@
 		},
 		symbols = {
 			On = "-g",
+			FastLink = "-g",
+			LikeC = "-gc",
+		},
+		boundschecking = {
+			On = "-boundscheck=on",
+			Off = "-boundscheck=off",
+			SafeOnly = "-boundscheck=safeonly",
+		},
+		deprecations = {
+			On = "-d",
+			Off = "-de",
+			Warn = "-dw"
 		}
 	}
 
