@@ -40,9 +40,5 @@
 
 	include( "actions/gmake.lua" )
 	include( "actions/vstudio.lua" )
-	-- this one depends on the monodevelop extension
-	if p.modules.monodevelop then
-		include( "actions/monodev.lua" )
-	end
 
 	return m
