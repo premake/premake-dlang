@@ -2,7 +2,7 @@ Premake Extension to support the [D](http://dlang.org) language
 
 ### Features ###
 
-* Support actions: gmake, vs20xx (VisualD), monodevelop (Mono-D)
+* Support actions: gmake, vs20xx (VisualD)
 * Support all compilers; DMD, LDC, GDC
 * Support combined and separate compilation
 
